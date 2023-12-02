@@ -8,29 +8,52 @@ private:
 
 public:
     using size_type = unsigned;
-    size_type const y_size, x_size;
+    size_type y_size, x_size;
 
     // конструкторы
 
-    Grid(T * data, size_type y_size, size_type x_size):
-        data(data), y_size(y_size), x_size(x_size) {  }
+    Grid(T * data, size_type y_size, size_type x_size) {
+        this->y_size = y_size;
+        this->x_size = x_size;
+        this->data = new T[y_size * x_size];
+        for(int i = 0; i < y_size * x_size; ++i) {
+            this->data[i] = data[i];
+        }
+    }
 
-    Grid(T& data):
-            data(data), y_size(1), x_size(1) {  }
 
-    Grid(size_type y_size, size_type x_size):
-            data(new T[x_size * y_size]), y_size(y_size), x_size(x_size) {  }
+    Grid(T& data) {
+        this->y_size = 1;
+        this->x_size = 1;
+        this->data = new T[1];
+        data[0] = data;
+    }
 
-    Grid(T& t, size_type y_size, size_type x_size):
-            data(new T[x_size * y_size]), y_size(y_size), x_size(x_size) {
+    Grid(size_type y_size, size_type x_size) {
+        this->y_size = y_size;
+        this->x_size = x_size;
+        this->data = new T[y_size * x_size];
+    }
+
+    Grid(T& t, size_type y_size, size_type x_size) {
+        this->y_size = y_size;
+        this->x_size = x_size;
+        this->data = new T[y_size * x_size];
         for (int i = 0; i < x_size * y_size; ++i) {
-            data[i] = t;
+            this->data[i] = t;
         }
     }
 
     // конструктор копирования
-    Grid(Grid<T> const& G):
-        data(G.data), y_size(G.y_size), x_size(G.x_size) {  }
+    Grid(Grid<T> const& G) {
+        x_size = G.x_size;
+        y_size = G.y_size;
+        data = new T[y_size * x_size];
+        for (int i = 0; i < x_size * y_size; ++i) {
+            data[i] = G.data[i];
+        }
+
+    }
 
     // деструктор
     ~Grid() {

@@ -100,9 +100,8 @@ public:
 
 
     T* operator[](size_type idx) {
-        return data + idx * sizes[1];
+        return data + idx * sizes[idx];
     }
 
     size_type get_sizes() const { return *sizes; }
 };
-
