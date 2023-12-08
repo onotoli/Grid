@@ -1,82 +1,57 @@
 #include <iostream>
+#include <cassert>
+
 
 template <typename T>
-class Grid final {
+class Grid{
 private:
-    using value_type = T;
     T * data;
 
 public:
     using size_type = unsigned;
     size_type y_size, x_size;
 
-    // конструкторы
+    // Конструкторы
 
-    Grid(T * data, size_type y_size, size_type x_size) {
-        this->y_size = y_size;
-        this->x_size = x_size;
-        this->data = new T[y_size * x_size];
-        for(int i = 0; i < y_size * x_size; ++i) {
+    // Конструктор с параметрами для инициализации данных
+    Grid(const T * data, size_type y_size, size_type x_size) : y_size(y_size), x_size(x_size), data(new T[y_size * x_size]) {
+        for(size_type i = 0; i < y_size * x_size; ++i) {
             this->data[i] = data[i];
         }
     }
 
-
-    Grid(T& data) {
-        this->y_size = 1;
-        this->x_size = 1;
-        this->data = new T[1];
-        data[0] = data;
+    // Конструктор для одного элемента
+    Grid(const T& data) : y_size(1), x_size(1), data(new T[1]) {
+        this->data[0] = data;
     }
 
-    Grid(size_type y_size, size_type x_size) {
-        this->y_size = y_size;
-        this->x_size = x_size;
-        this->data = new T[y_size * x_size];
+    // Конструктор для создания пустой сетки заданного размера
+    Grid(size_type y_size, size_type x_size) : y_size(y_size), x_size(x_size), data(new T[y_size * x_size]) {
     }
 
-    Grid(T& t, size_type y_size, size_type x_size) {
-        this->y_size = y_size;
-        this->x_size = x_size;
-        this->data = new T[y_size * x_size];
-        for (int i = 0; i < x_size * y_size; ++i) {
-            this->data[i] = t;
-        }
+    // Конструктор для заполнения сетки одним значением
+    Grid(const T& t, size_type y_size, size_type x_size) : y_size(y_size), x_size(x_size), data(new T[y_size * x_size]) {
+        std::fill_n(data, y_size * x_size, t);
     }
 
-    // конструктор копирования
-    Grid(Grid<T> const& G) {
-        x_size = G.x_size;
-        y_size = G.y_size;
-        data = new T[y_size * x_size];
-        for (int i = 0; i < x_size * y_size; ++i) {
-            data[i] = G.data[i];
-        }
-
+    // Конструктор копирования
+    Grid(const Grid<T>& G) : y_size(G.y_size), x_size(G.x_size), data(new T[y_size * x_size]) {
+        std::copy(G.data, G.data + y_size * x_size, data);
     }
 
-    // деструктор
+    // Деструктор
     ~Grid() {
         delete[] data;
     }
-    
-    // конструктор премещения
-    Grid(Grid&& other) : y_size(0), x_size(0), data(nullptr) {
-        // перемещаем ресурсы из 'other' в этот объект
-        y_size = other.y_size;
-        x_size = other.x_size;
-        data = other.data;
 
-        // обнуляем other, чтобы он больше не ссылался на перемещенные ресурсы
+    // Конструктор перемещения
+    Grid(Grid&& other) noexcept : y_size(other.y_size), x_size(other.x_size), data(other.data) {
         other.y_size = 0;
         other.x_size = 0;
         other.data = nullptr;
-
-        // удаляем other
-        ~Grid(other);
     }
 
-
+    // Операторы доступа
     T operator()(size_type y_idx, size_type x_idx) const {
         return data[y_idx * x_size + x_idx];
     }
@@ -85,60 +60,82 @@ public:
         return data[y_idx * x_size + x_idx];
     }
 
-    // оператор присваивания
-    Grid<T>& operator=(T &t) {
-        for (
-            auto it = data , end = data + x_size * y_size;
-            it != end; ++it
-         ) *it = t;
-        return * this;
-        }
-
-    // оператор перемещения
-    Grid& operator=(Grid&& other) {
+    // Оператор присваивания копированием
+    Grid<T>& operator=(const Grid<T>& other) {
         if (this != &other) {
-            // Освобождаем текущие данные
-            delete[] data;
-
-            // Перемещаем данные из other
-            data = std::move(other.data);
-            y_size = std::move(other.y_size);
-            x_size = std::move(other.x_size);
-
-            // Обнуляем данные в other
-            other.data = nullptr;
-            other.y_size = 0;
-            other.x_size = 0;
-
-            // удаляем other
-            ~Grid(other);
+            Grid<T> temp(other);
+            std::swap(data, temp.data);
+            std::swap(y_size, temp.y_size);
+            std::swap(x_size, temp.x_size);
         }
         return *this;
     }
 
-    T* operator[](size_type idx) {
-        return data + idx * x_size;
+    // Оператор присваивания перемещением
+    Grid& operator=(Grid&& other) noexcept {
+        if (this != &other) {
+            delete[] data;
+            data = other.data;
+            y_size = other.y_size;
+            x_size = other.x_size;
+            other.data = nullptr;
+            other.y_size = 0;
+            other.x_size = 0;
+        }
+        return *this;
     }
 
+    // Оператор индексации
+    T* operator[](size_type idx){
+            return data + idx * x_size;
+    }
+
+    // Геттеры для размеров
     size_type get_y_size() const { return y_size; }
     size_type get_x_size() const { return x_size; }
 };
 
 
-#include <cassert>
 int main() {
-    float x = 0.0f;
-    Grid<float> g(x, 3, 2);
-    assert(3 == g.get_y_size());
-    assert(2 == g.get_x_size());
+    // Тест конструктора с параметрами
+    int initData[4] = {1, 2, 3, 4};
+    Grid<int> grid1(initData, 2, 2);
+    assert(grid1(0, 0) == 1 && grid1(0, 1) == 2);
+    assert(grid1(1, 0) == 3 && grid1(1, 1) == 4);
 
-    using gsize_t = Grid<int>::size_type;
+    // Тест конструктора для одного элемента
+    int v = 5;
+    Grid<int> grid2(v);
+    assert(grid2(0, 0) == 5);
 
-    for (gsize_t y_idx = 0; y_idx != g.get_y_size(); ++y_idx){
-        for (gsize_t x_idx = 0; x_idx != g.get_x_size(); ++x_idx){
-            assert(0.0f == g[y_idx][x_idx]);
-        }
-    }
+    // Тест конструктора для заполнения сетки одним значением
+    v = 9;
+    Grid<int> grid4(v, 2, 2);
+    assert(grid4(0, 0) == 9 && grid4(0, 1) == 9);
+    assert(grid4(1, 0) == 9 && grid4(1, 1) == 9);
+
+    // Тест конструктора копирования
+    Grid<int> grid5 = grid1;
+    assert(grid5(0, 0) == 1 && grid5(0, 1) == 2);
+    assert(grid5(1, 0) == 3 && grid5(1, 1) == 4);
+
+    // Тест конструктора перемещения
+    Grid<int> grid6 = std::move(grid5);
+    assert(grid6(0, 0) == 1 && grid6(0, 1) == 2);
+    assert(grid6(1, 0) == 3 && grid6(1, 1) == 4);
+
+    // Тест оператора присваивания копированием
+    v = 2;
+
+    Grid<int> grid7(v, 2);
+    grid7 = grid1;
+    assert(grid7(0, 0) == 1 && grid7(0, 1) == 2);
+    assert(grid7(1, 0) == 3 && grid7(1, 1) == 4);
+
+    // Тест оператора индексации
+    assert(grid1[0][0] == 1 && grid1[0][1] == 2);
+    assert(grid1[1][0] == 3 && grid1[1][1] == 4);
+
 
     return 0;
 }
